@@ -10,10 +10,43 @@
         <form method="post" enctype="multipart/form-data" class="mt-4">
             {% csrf_token %}
             <div class="mb-3">
-                {{ form.as_p }}
+                {{ form.name.label_tag }} {{ form.name }}<br>
+                {{ form.description.label_tag }} {{ form.description }}<br>
+                {{ form.instructions.label_tag }} {{ form.instructions }}<br>
+                {{ form.cooking_time.label_tag }} {{ form.cooking_time }}<br>
+                {{ form.image.label_tag }} {{ form.image }}<br>
+                {{ form.meal_type.label_tag }} {{ form.meal_type }}<br>
+                {{ form.categories.label_tag }} {{ form.categories }}<br>
             </div>
+
+            <h3>Ингредиенты</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Выбрать</th>
+                        <th>Название</th>
+                        <th>Количество</th>
+                        <th>Единица измерения</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ingredient in ingredients %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="ingredients" value="{{ ingredient.id }}">
+                            </td>
+                            <td>{{ ingredient.name }}</td>
+                            <td>
+                                <input type="number" name="quantity_{{ ingredient.id }}" value="1" min="1">
+                            </td>
+                            <td>{{ ingredient.measure }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
             <button type="submit" class="btn btn-success">Сохранить изменения</button>
-            <a href="{% url 'recipeapp:recipe_detail' pk=object.pk %}" class="btn btn-secondary">Отмена</a>
+            <a href="{% url 'recipeapp:recipe_detail' object.pk %}" class="btn btn-secondary">Отмена</a>
         </form>
     </div>
 {% endblock %}

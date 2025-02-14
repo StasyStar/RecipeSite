@@ -9,47 +9,52 @@ class UserBioForm(forms.Form):
     bio = forms.CharField(label='Биография', widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}))
 
 
-class MultipleFileInput(forms.ClearableFileInput):
-    allow_multiple_selected = True
-
-
-class MultipleFileField(forms.FileField):
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault("widget", MultipleFileInput())
-        super().__init__(*args, **kwargs)
-
-    def clean(self, data, initial=None):
-        single_file_clean = super().clean
-        if isinstance(data, (list, tuple)):
-            result = [single_file_clean(d, initial) for d in data]
-        else:
-            result = [single_file_clean(data, initial)]
-        return result
-
-
 class IngredientForm(forms.ModelForm):
     class Meta:
         model = Ingredient
-        fields = ['name', 'description', 'measure', 'quantity']  # Указываем только существующие поля
+        fields = ['name', 'description', 'measure']  # Указываем только существующие поля
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'measure': forms.TextInput(attrs={'class': 'form-control'}),
-            'quantity': forms.NumberInput(attrs={'class': 'form-control'}),
         }
+
+
+class IngredientSelectionForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        ingredients = kwargs.pop('ingredients', None)
+        super().__init__(*args, **kwargs)
+        for ingredient in ingredients:
+            self.fields[f'ingredient_{ingredient.id}'] = forms.BooleanField(
+                required=False,
+                label=ingredient.name,
+                widget=forms.CheckboxInput()
+            )
+            self.fields[f'quantity_{ingredient.id}'] = forms.IntegerField(
+                required=False,
+                initial=1,
+                min_value=1,
+                label='Количество',
+                widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 80px;'})
+            )
+            self.fields[f'measure_{ingredient.id}'] = forms.CharField(
+                required=False,
+                initial=ingredient.measure,
+                label='Единица измерения',
+                widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly', 'style': 'width: 80px;'})
+            )
 
 
 class RecipeForm(forms.ModelForm):
     class Meta:
         model = Recipe
-        fields = ['name', 'description', 'instructions', 'cooking_time', 'image', 'ingredients', 'categories']
+        fields = ['name', 'description', 'instructions', 'cooking_time', 'image', 'categories']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'instructions': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
             'cooking_time': forms.NumberInput(attrs={'class': 'form-control'}),
             'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
-            'ingredients': forms.CheckboxSelectMultiple(),  # Используем CheckboxSelectMultiple
             'categories': forms.SelectMultiple(attrs={'class': 'form-control'}),
         }
         labels = {
@@ -58,7 +63,6 @@ class RecipeForm(forms.ModelForm):
             'instructions': 'Инструкции',
             'cooking_time': 'Время приготовления (мин)',
             'image': 'Изображение',
-            'ingredients': 'Ингредиенты',
             'categories': 'Категории',
         }
 
