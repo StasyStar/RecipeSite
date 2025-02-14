@@ -7,19 +7,89 @@
 {% block body %}
     <div class="container mt-5">
         <h1>Список продуктов</h1>
-        {% if ingredients %}
-            <div class="list-group">
-                {% for ingredient in ingredients %}
-                    <a href="{% url 'recipeapp:ingredient_detail' pk=ingredient.pk %}" class="list-group-item list-group-item-action">
-                        <strong>{{ ingredient.name }}</strong> - {{ ingredient.description }} ({{ ingredient.measure }})
-                    </a>
-                {% endfor %}
-            </div>
-        {% else %}
-            <h3>Продуктов еще нет...</h3>
-        {% endif %}
-        <div class="mt-3">
-            <a href="{% url 'recipeapp:ingredient_create' %}" class="btn btn-success">Создать новый продукт</a>
+
+        <!-- Кнопки сортировки -->
+        <div class="mb-3">
+            <strong>Сортировать по:</strong>
+            <a href="?sort=name&page={{ ingredients.number }}" class="btn btn-outline-secondary btn-sm">Название (А-Я)</a>
+            <a href="?sort=-name&page={{ ingredients.number }}" class="btn btn-outline-secondary btn-sm">Название (Я-А)</a>
+            <a href="?sort=measure&page={{ ingredients.number }}" class="btn btn-outline-secondary btn-sm">Единица измерения (А-Я)</a>
+            <a href="?sort=-measure&page={{ ingredients.number }}" class="btn btn-outline-secondary btn-sm">Единица измерения (Я-А)</a>
         </div>
+
+        <form method="post" action="{% url 'recipeapp:ingredient_delete' %}">
+            {% csrf_token %}
+            {% if ingredients %}
+                <div class="list-group">
+                    {% for ingredient in ingredients %}
+                        <div class="list-group-item list-group-item-action">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="ingredient_ids" value="{{ ingredient.id }}" id="ingredient_{{ ingredient.id }}">
+                                <label class="form-check-label" for="ingredient_{{ ingredient.id }}">
+                                    <strong>{{ ingredient.name }}</strong> - {{ ingredient.description }} ({{ ingredient.measure }})
+                                </label>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Пагинация -->
+                <nav aria-label="Page navigation" class="mt-3">
+                    <ul class="pagination">
+                        <!-- Ссылка на первую страницу -->
+                        {% if ingredients.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1&sort={{ sort }}" aria-label="First">
+                                    <span aria-hidden="true">&laquo;&laquo; Первая</span>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        <!-- Ссылка на предыдущую страницу -->
+                        {% if ingredients.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ ingredients.previous_page_number }}&sort={{ sort }}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo; Предыдущая</span>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        <!-- Текущая страница -->
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                Страница {{ ingredients.number }} из {{ ingredients.paginator.num_pages }}
+                            </span>
+                        </li>
+
+                        <!-- Ссылка на следующую страницу -->
+                        {% if ingredients.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ ingredients.next_page_number }}&sort={{ sort }}" aria-label="Next">
+                                    <span aria-hidden="true">Следующая &raquo;</span>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        <!-- Ссылка на последнюю страницу -->
+                        {% if ingredients.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ ingredients.paginator.num_pages }}&sort={{ sort }}" aria-label="Last">
+                                    <span aria-hidden="true">Последняя &raquo;&raquo;</span>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% else %}
+                <h3>Продуктов еще нет...</h3>
+            {% endif %}
+
+            <!-- Кнопки управления -->
+            <div class="mt-3">
+                <a href="{% url 'recipeapp:ingredient_create' %}" class="btn btn-success">Создать новый продукт</a>
+                <a href="{% url 'recipeapp:recipe_index' %}" class="btn btn-primary">На главную</a>
+                <button type="submit" class="btn btn-danger">Удалить выбранные</button>
+            </div>
+        </form>
     </div>
 {% endblock %}

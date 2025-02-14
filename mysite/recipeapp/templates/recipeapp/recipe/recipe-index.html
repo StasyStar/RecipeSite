@@ -32,7 +32,7 @@
         <div class="mb-3">
             <strong>Категория:</strong>
             <ul>
-                <li><a href="?">Все</a></li>  <!-- Ссылка на все рецепты -->
+                <li><a href="?">Все</a></li>
                 {% for category in categories %}
                     <li><a href="?category={{ category.id }}">{{ category.name }}</a></li>
                 {% endfor %}
@@ -61,25 +61,24 @@
             {% endfor %}
         </ul>
 
-
-
         <!-- Кнопка для создания нового рецепта -->
         <div class="mb-3">
             <a href="{% url 'recipeapp:recipe_create' %}" class="btn btn-primary">Создать рецепт</a>
+            <a href="{% url 'recipeapp:ingredient_list' %}" class="btn btn-secondary">Просмотреть ингредиенты</a>
         </div>
 
         <!-- Пагинация -->
         <div class="pagination mt-3">
             {% if recipes.has_previous %}
-                <a href="?page=1">&laquo; Первая</a>
-                <a href="?page={{ recipes.previous_page_number }}">Предыдущая</a>
+                <a href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}">&laquo; Первая</a>
+                <a href="?page={{ recipes.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}">Предыдущая</a>
             {% endif %}
 
             <span>Страница {{ recipes.number }} из {{ recipes.paginator.num_pages }}</span>
 
             {% if recipes.has_next %}
-                <a href="?page={{ recipes.next_page_number }}">Следующая</a>
-                <a href="?page={{ recipes.paginator.num_pages }}">Последняя &raquo;</a>
+                <a href="?page={{ recipes.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}">Следующая</a>
+                <a href="?page={{ recipes.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}">Последняя &raquo;</a>
             {% endif %}
         </div>
     </div>

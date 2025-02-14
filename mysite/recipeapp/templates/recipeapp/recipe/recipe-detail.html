@@ -10,32 +10,82 @@
         <div class="card">
             <div class="card-body">
                 <h2 class="card-title">{{ object.name }}</h2>
+
+                <!-- Отображение изображения -->
                 {% if object.image %}
-                    <img src="{{ object.image.url }}" alt="{{ object.name }}" class="img-fluid mb-3">
+                    <img src="{{ object.image.url }}" alt="{{ object.name }}" class="img-fluid mb-3" style="max-width: 100%; height: auto;">
                 {% else %}
-                    <p>Изображение отсутствует.</p>
+                    <p class="text-muted">Изображение отсутствует.</p>
                 {% endif %}
-                <p class="card-text">Категория: {{ object.meal_type }}</p>
-                <p class="card-text">{{ object.description }}</p>
+
+                <p class="card-text"><strong>Категория:</strong> {{ object.get_meal_type_display }}</p>
+                <p class="card-text"><strong>Описание:</strong> {{ object.description }}</p>
+
+                <!-- Отображение ингредиентов -->
                 <h3>Ингредиенты:</h3>
                 <ul class="list-group">
-                    {% for ingredient in object.ingredients.all %}
-                        <li class="list-group-item">{{ ingredient.name }}</li>
+                    {% for recipe_ingredient in object.recipe_ingredients.all %}
+                        <li class="list-group-item">
+                            {{ recipe_ingredient.ingredient.name }} -
+                            {{ recipe_ingredient.quantity }} {{ recipe_ingredient.ingredient.measure }}
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item">Ингредиенты не указаны.</li>
                     {% endfor %}
                 </ul>
+
+                <!-- Инструкции -->
                 <h3 class="mt-3">Инструкции:</h3>
                 <p class="card-text">{{ object.instructions }}</p>
-                <p class="card-text">Комментарии: {{ object.comments }}</p>
-                <p class="card-text">Рейтинг: {{ object.rate }}</p>
-                <p class="card-text">Автор: {% firstof object.created_by.first_name object.created_by.username %}</p>
-                <p class="card-text">Дата создания: {{ object.created_at }}</p>
+
+                <!-- Комментарии -->
+                <h3>Комментарии:</h3>
+                <ul class="list-group">
+                    {% for comment in object.comments.all %}
+                        <li class="list-group-item">
+                            <strong>{{ comment.user.username }}</strong> ({{ comment.created_at|date:"d.m.Y H:i" }}): {{ comment.text }}
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item">Комментариев пока нет.</li>
+                    {% endfor %}
+                </ul>
+
+                <!-- Форма для добавления комментария -->
+                <h3 class="mt-3">Оставить комментарий:</h3>
+                <form method="post" action="{% url 'recipeapp:add_comment' object.pk %}" class="mb-3">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <textarea name="text" class="form-control" rows="3" placeholder="Ваш комментарий" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Отправить</button>
+                </form>
+
+                <!-- Форма для оценки рецепта -->
+                <h3 class="mt-3">Оценить рецепт:</h3>
+                <form method="post" action="{% url 'recipeapp:rate_recipe' object.pk %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <input type="number" name="rating" min="0" max="10" class="form-control" placeholder="Оценка от 0 до 10" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Оценить</button>
+                </form>
+
+                <!-- Рейтинг, автор и дата создания -->
+                <p class="card-text mt-3"><strong>Рейтинг:</strong> {{ object.rate|default:"еще нет оценок" }}</p>
+                <p class="card-text"><strong>Автор:</strong> {% firstof object.created_by.first_name object.created_by.username %}</p>
+                <p class="card-text"><strong>Дата создания:</strong> {{ object.created_at|date:"d.m.Y H:i" }}</p>
             </div>
         </div>
+
+        <!-- Кнопки управления -->
         <div class="mt-3">
             <a href="{% url 'recipeapp:recipe_index' %}" class="btn btn-secondary">Вернуться к списку рецептов</a>
             <a href="{% url 'recipeapp:recipe_update' object.pk %}" class="btn btn-primary">Редактировать рецепт</a>
+            <a href="{% url 'recipeapp:ingredient_list' %}" class="btn btn-info">Список ингредиентов</a> <!-- Новая кнопка -->
+            <form method="post" action="{% url 'recipeapp:recipe_delete' object.pk %}" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Удалить рецепт</button>
+            </form>
         </div>
     </div>
 {% endblock %}
-
-Найти еще

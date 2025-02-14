@@ -1,11 +1,14 @@
-from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse, HttpRequest, HttpResponseRedirect
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
+from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 
-from recipeapp.forms import UserBioForm, IngredientForm, RecipeForm, IngredientSelectionForm
-from recipeapp.models import Ingredient, Recipe, Category
+from recipeapp.forms import UserBioForm, IngredientForm, RecipeForm, RecipeIngredient
+from recipeapp.models import Ingredient, Recipe, Category, Comment, Rating
 
 
 class RecipeFilterMixin:
@@ -55,10 +58,27 @@ class IngredientDetailsView(DetailView):
 
 
 class IngredientListView(ListView):
-    template_name = 'recipeapp/ingredient/ingredient-list.html'
-    context_object_name = 'ingredients'
-    queryset = Ingredient.objects.filter(archived=False)
+    template_name = 'recipeapp/ingredient/ingredient-list.html'  # Путь к шаблону
+    context_object_name = 'ingredients'  # Имя переменной контекста
     paginate_by = 10  # Пагинация по 10 ингредиентов на странице
+
+    def get_queryset(self):
+        # Получаем параметр сортировки из запроса (например, ?sort=name)
+        sort_by = self.request.GET.get('sort', 'name')  # По умолчанию сортируем по имени
+
+        # Определяем допустимые поля для сортировки
+        valid_sort_fields = ['name', 'measure', '-name', '-measure']
+        if sort_by not in valid_sort_fields:
+            sort_by = 'name'  # Если поле сортировки недопустимо, сортируем по умолчанию
+
+        # Возвращаем отсортированный и отфильтрованный queryset
+        return Ingredient.objects.filter(archived=False).order_by(sort_by)
+
+    def get_context_data(self, **kwargs):
+        # Добавляем параметр сортировки в контекст
+        context = super().get_context_data(**kwargs)
+        context['sort'] = self.request.GET.get('sort', 'name')  # Передаем текущую сортировку в шаблон
+        return context
 
 
 class IngredientCreateView(CreateView):
@@ -84,15 +104,22 @@ class IngredientUpdateView(UpdateView):
         return response
 
 
-class IngredientDeleteView(DeleteView):
-    model = Ingredient
+class IngredientDeleteView(View):
     success_url = reverse_lazy('recipeapp:ingredient_list')
 
-    def form_valid(self, form):
-        success_url = self.get_success_url()
-        self.object.archived = True
-        self.object.save()
-        return HttpResponseRedirect(success_url)
+    def post(self, request, *args, **kwargs):
+        # Получаем список выбранных ингредиентов
+        ingredient_ids = request.POST.getlist('ingredient_ids')
+
+        if ingredient_ids:
+            # Архивируем выбранные ингредиенты
+            Ingredient.objects.filter(id__in=ingredient_ids).update(archived=True)
+            messages.success(request, 'Выбранные ингредиенты успешно архивированы.')
+        else:
+            messages.error(request, 'Не выбрано ни одного ингредиента для архивирования.')
+
+        # Перенаправляем на страницу списка ингредиентов
+        return HttpResponseRedirect(self.success_url)
 
 
 class RecipeListView(RecipeFilterMixin, ListView):
@@ -129,14 +156,38 @@ def user_form(request: HttpRequest) -> HttpResponse:
     return render(request, 'recipeapp/user-bio-form.html', context=context)
 
 
-class RecipeCreateView(LoginRequiredMixin, CreateView):
+class RecipeCreateView(CreateView):
     model = Recipe
+    form_class = RecipeForm
     template_name = 'recipeapp/recipe/recipe-create.html'
-    fields = ['name', 'description', 'instructions', 'cooking_time', 'image', 'ingredients', 'categories']
-    success_url = reverse_lazy('recipeapp:recipe_list')
+    success_url = reverse_lazy('recipeapp:recipe_index')  # Перенаправление на список рецептов
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Получаем все неархивированные ингредиенты
+        context['ingredients'] = Ingredient.objects.filter(archived=False)
+        return context
 
     def form_valid(self, form):
-        form.instance.created_by = self.request.user
+        # Сохраняем рецепт
+        recipe = form.save(commit=False)
+        recipe.created_by = self.request.user
+        recipe.save()
+
+        # Обрабатываем ингредиенты
+        ingredients = Ingredient.objects.filter(archived=False)
+        for ingredient in ingredients:
+            ingredient_id = ingredient.id
+            is_selected = self.request.POST.get(f'ingredient_{ingredient_id}') == 'on'
+            quantity = self.request.POST.get(f'quantity_{ingredient_id}', 1)
+
+            if is_selected:
+                RecipeIngredient.objects.create(
+                    recipe=recipe,
+                    ingredient=ingredient,
+                    quantity=quantity
+                )
+
         return super().form_valid(form)
 
 
@@ -144,13 +195,14 @@ class RecipeUpdateView(UpdateView):
     model = Recipe
     form_class = RecipeForm
     template_name = 'recipeapp/recipe/recipe-update.html'
-    success_url = reverse_lazy('recipeapp:recipe_index')
+
+    def get_success_url(self):
+        # Редирект на страницу с деталями текущего рецепта
+        return reverse_lazy('recipeapp:recipe_detail', kwargs={'pk': self.object.pk})
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Получаем все неархивированные ингредиенты
         ingredients = Ingredient.objects.filter(archived=False)
-        # Создаем словарь с количеством ингредиентов для текущего рецепта
         ingredient_quantities = {
             ingredient.id: self.object.recipe_ingredients.filter(ingredient=ingredient).first().quantity
             if self.object.recipe_ingredients.filter(ingredient=ingredient).exists()
@@ -160,6 +212,34 @@ class RecipeUpdateView(UpdateView):
         context['ingredients'] = ingredients
         context['ingredient_quantities'] = ingredient_quantities
         return context
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        if form.is_valid():
+            # Сохраняем основную форму
+            self.object = form.save()
+
+            # Обрабатываем ингредиенты
+            ingredients = Ingredient.objects.filter(archived=False)
+            for ingredient in ingredients:
+                ingredient_id = ingredient.id
+                is_selected = request.POST.get(f'ingredient_{ingredient_id}') == 'on'
+                quantity = request.POST.get(f'quantity_{ingredient_id}', 1)
+
+                if is_selected:
+                    RecipeIngredient.objects.update_or_create(
+                        recipe=self.object,
+                        ingredient=ingredient,
+                        defaults={'quantity': quantity}
+                    )
+                else:
+                    RecipeIngredient.objects.filter(recipe=self.object, ingredient=ingredient).delete()
+
+            # Вызываем form_valid для выполнения редиректа
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
 
 
 class RecipeDeleteView(LoginRequiredMixin, DeleteView):
@@ -197,4 +277,26 @@ class CategoryDeleteView(DeleteView):
     model = Category
     template_name = 'recipeapp/category/category_confirm_delete.html'
     success_url = reverse_lazy('category-list')
+
+
+@login_required
+def add_comment(request, pk):
+    recipe = get_object_or_404(Recipe, pk=pk)
+    if request.method == 'POST':
+        text = request.POST.get('text')
+        Comment.objects.create(recipe=recipe, user=request.user, text=text)
+    return redirect('recipeapp:recipe_detail', pk=pk)
+
+
+@login_required
+def rate_recipe(request, pk):
+    recipe = get_object_or_404(Recipe, pk=pk)
+    if request.method == 'POST':
+        rating = int(request.POST.get('rating', 0))
+        Rating.objects.update_or_create(
+            recipe=recipe,
+            user=request.user,
+            defaults={'value': rating}
+        )
+    return redirect('recipeapp:recipe_detail', pk=pk)
 

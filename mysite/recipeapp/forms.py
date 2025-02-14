@@ -49,6 +49,14 @@ class RecipeForm(forms.ModelForm):
     class Meta:
         model = Recipe
         fields = ['name', 'description', 'instructions', 'cooking_time', 'image', 'categories']
+        labels = {
+            'name': 'Название',
+            'description': 'Описание',
+            'instructions': 'Инструкции',
+            'cooking_time': 'Время приготовления (мин)',
+            'image': 'Изображение',
+            'categories': 'Категории',
+        }
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
@@ -58,39 +66,10 @@ class RecipeForm(forms.ModelForm):
             'categories': forms.SelectMultiple(attrs={'class': 'form-control'}),
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Добавляем поля для ингредиентов
-        self.ingredients = Ingredient.objects.filter(archived=False)
-        for ingredient in self.ingredients:
-            self.fields[f'ingredient_{ingredient.id}'] = forms.BooleanField(
-                required=False,
-                label=ingredient.name,
-                widget=forms.CheckboxInput()
-            )
-            self.fields[f'quantity_{ingredient.id}'] = forms.IntegerField(
-                required=False,
-                initial=1,
-                min_value=1,
-                label='Количество',
-                widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 80px;'})
-            )
-
     def save(self, commit=True):
         recipe = super().save(commit=False)
         if commit:
             recipe.save()
-        # Сохраняем ингредиенты
-        for ingredient in self.ingredients:
-            if self.cleaned_data.get(f'ingredient_{ingredient.id}'):
-                quantity = self.cleaned_data.get(f'quantity_{ingredient.id}', 1)
-                RecipeIngredient.objects.update_or_create(
-                    recipe=recipe,
-                    ingredient=ingredient,
-                    defaults={'quantity': quantity}
-                )
-            else:
-                RecipeIngredient.objects.filter(recipe=recipe, ingredient=ingredient).delete()
         return recipe
 
 

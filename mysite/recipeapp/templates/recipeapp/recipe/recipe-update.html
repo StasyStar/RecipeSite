@@ -1,4 +1,9 @@
+{% extends 'recipeapp/base.html' %}
 {% load custom_filters %}
+
+{% block title %}
+    Редактирование рецепта: {{ object.name }}
+{% endblock %}
 
 {% block body %}
     <div class="container mt-5">
@@ -51,5 +56,10 @@
             <button type="submit" class="btn btn-success">Сохранить изменения</button>
             <a href="{% url 'recipeapp:recipe_detail' object.pk %}" class="btn btn-secondary">Отмена</a>
         </form>
+
+        <!-- Кнопка для создания недостающих ингредиентов -->
+        <div class="mt-3">
+            <a href="{% url 'recipeapp:ingredient_create' %}" class="btn btn-primary">Создать недостающие ингредиенты</a>
+        </div>
     </div>
 {% endblock %}

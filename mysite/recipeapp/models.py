@@ -13,11 +13,30 @@ class Category(models.Model):
 class Ingredient(models.Model):
     class Meta:
         ordering = ['name']
+        verbose_name = 'Ингредиент'  # Название модели в единственном числе
+        verbose_name_plural = 'Ингредиенты'  # Название модели во множественном числе
 
-    name = models.CharField(max_length=200, null=False)
-    description = models.TextField(null=False, blank=True, db_index=True)
-    measure = models.CharField(max_length=15, blank=True, null=True)
-    archived = models.BooleanField(default=False)
+    name = models.CharField(
+        max_length=200,
+        null=False,
+        verbose_name="Название"  # Название поля
+    )
+    description = models.TextField(
+        null=False,
+        blank=True,
+        db_index=True,
+        verbose_name="Описание"  # Название поля
+    )
+    measure = models.CharField(
+        max_length=15,
+        blank=True,
+        null=True,
+        verbose_name="Единица измерения"  # Название поля
+    )
+    archived = models.BooleanField(
+        default=False,
+        verbose_name="Архивировано"  # Название поля
+    )
 
     def __str__(self) -> str:
         return f'Продукт(название={self.name}, описание={self.description}, мера={self.measure})'
@@ -53,7 +72,7 @@ class Recipe(models.Model):
 class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='recipe_ingredients')
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE, related_name='recipe_ingredients')
-    quantity = models.PositiveIntegerField(default=1)
+    quantity = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return f'{self.ingredient.name} ({self.quantity} {self.ingredient.measure}) в рецепте {self.recipe.name}'
