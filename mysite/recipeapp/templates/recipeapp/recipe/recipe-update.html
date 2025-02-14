@@ -1,8 +1,4 @@
-{% extends 'recipeapp/base.html' %}
-
-{% block title %}
-    Редактирование рецепта
-{% endblock %}
+{% load custom_filters %}
 
 {% block body %}
     <div class="container mt-5">
@@ -10,13 +6,7 @@
         <form method="post" enctype="multipart/form-data" class="mt-4">
             {% csrf_token %}
             <div class="mb-3">
-                {{ form.name.label_tag }} {{ form.name }}<br>
-                {{ form.description.label_tag }} {{ form.description }}<br>
-                {{ form.instructions.label_tag }} {{ form.instructions }}<br>
-                {{ form.cooking_time.label_tag }} {{ form.cooking_time }}<br>
-                {{ form.image.label_tag }} {{ form.image }}<br>
-                {{ form.meal_type.label_tag }} {{ form.meal_type }}<br>
-                {{ form.categories.label_tag }} {{ form.categories }}<br>
+                {{ form.as_p }}
             </div>
 
             <h3>Ингредиенты</h3>
@@ -33,11 +23,24 @@
                     {% for ingredient in ingredients %}
                         <tr>
                             <td>
-                                <input type="checkbox" name="ingredients" value="{{ ingredient.id }}">
+                                <input
+                                    type="checkbox"
+                                    name="ingredient_{{ ingredient.id }}"
+                                    id="ingredient_{{ ingredient.id }}"
+                                    {% if ingredient in object.ingredients.all %}checked{% endif %}
+                                >
                             </td>
                             <td>{{ ingredient.name }}</td>
                             <td>
-                                <input type="number" name="quantity_{{ ingredient.id }}" value="1" min="1">
+                                <input
+                                    type="number"
+                                    name="quantity_{{ ingredient.id }}"
+                                    id="quantity_{{ ingredient.id }}"
+                                    value="{{ ingredient_quantities|get:ingredient.id }}"
+                                    min="1"
+                                    class="form-control"
+                                    style="width: 80px;"
+                                >
                             </td>
                             <td>{{ ingredient.measure }}</td>
                         </tr>

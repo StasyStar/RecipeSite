@@ -140,9 +140,9 @@ class RecipeCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class RecipeUpdateView(LoginRequiredMixin, UpdateView):
+class RecipeUpdateView(UpdateView):
     model = Recipe
-    form_class = RecipeForm  # Используем форму для редактирования рецепта
+    form_class = RecipeForm
     template_name = 'recipeapp/recipe/recipe-update.html'
     success_url = reverse_lazy('recipeapp:recipe_index')
 
@@ -150,30 +150,16 @@ class RecipeUpdateView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         # Получаем все неархивированные ингредиенты
         ingredients = Ingredient.objects.filter(archived=False)
+        # Создаем словарь с количеством ингредиентов для текущего рецепта
+        ingredient_quantities = {
+            ingredient.id: self.object.recipe_ingredients.filter(ingredient=ingredient).first().quantity
+            if self.object.recipe_ingredients.filter(ingredient=ingredient).exists()
+            else 1
+            for ingredient in ingredients
+        }
         context['ingredients'] = ingredients
-        # Создаем форму для выбора ингредиентов
-        context['ingredient_form'] = IngredientSelectionForm(ingredients=ingredients)
+        context['ingredient_quantities'] = ingredient_quantities
         return context
-
-    def form_valid(self, form):
-        # Сохраняем рецепт
-        response = super().form_valid(form)
-        # Получаем форму ингредиентов
-        ingredient_form = IngredientSelectionForm(self.request.POST, instance=self.object)
-
-        if ingredient_form.is_valid():
-            # Обновляем ингредиенты
-            ingredient_form.save()
-            # Обновляем связь между рецептом и ингредиентами
-            for ingredient in ingredient_form.cleaned_data['ingredients']:
-                quantity = ingredient_form.cleaned_data.get(f'quantity_{ingredient.id}', 1)  # Получаем количество или 1 по умолчанию
-                self.object.ingredients.add(ingredient)
-                # Устанавливаем количество ингредиента в RecipeIngredient, если такая модель у вас есть
-                # Если у вас нет такой модели, этот шаг можно пропустить или изменить в зависимости от логики
-                ingredient.quantity = quantity
-                ingredient.save()
-
-        return response
 
 
 class RecipeDeleteView(LoginRequiredMixin, DeleteView):

@@ -1,5 +1,5 @@
 from django import forms
-from recipeapp.models import Ingredient, Recipe, Category
+from recipeapp.models import Ingredient, Recipe, Category, RecipeIngredient
 
 
 class UserBioForm(forms.Form):
@@ -57,14 +57,41 @@ class RecipeForm(forms.ModelForm):
             'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
             'categories': forms.SelectMultiple(attrs={'class': 'form-control'}),
         }
-        labels = {
-            'name': 'Название',
-            'description': 'Описание',
-            'instructions': 'Инструкции',
-            'cooking_time': 'Время приготовления (мин)',
-            'image': 'Изображение',
-            'categories': 'Категории',
-        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Добавляем поля для ингредиентов
+        self.ingredients = Ingredient.objects.filter(archived=False)
+        for ingredient in self.ingredients:
+            self.fields[f'ingredient_{ingredient.id}'] = forms.BooleanField(
+                required=False,
+                label=ingredient.name,
+                widget=forms.CheckboxInput()
+            )
+            self.fields[f'quantity_{ingredient.id}'] = forms.IntegerField(
+                required=False,
+                initial=1,
+                min_value=1,
+                label='Количество',
+                widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 80px;'})
+            )
+
+    def save(self, commit=True):
+        recipe = super().save(commit=False)
+        if commit:
+            recipe.save()
+        # Сохраняем ингредиенты
+        for ingredient in self.ingredients:
+            if self.cleaned_data.get(f'ingredient_{ingredient.id}'):
+                quantity = self.cleaned_data.get(f'quantity_{ingredient.id}', 1)
+                RecipeIngredient.objects.update_or_create(
+                    recipe=recipe,
+                    ingredient=ingredient,
+                    defaults={'quantity': quantity}
+                )
+            else:
+                RecipeIngredient.objects.filter(recipe=recipe, ingredient=ingredient).delete()
+        return recipe
 
 
 class CategoryForm(forms.ModelForm):

@@ -3,11 +3,12 @@ from django.db.models import QuerySet
 from django.http import HttpRequest
 
 from .admin_mixins import ExportAsCSVMixin
-from .models import Recipe, Ingredient, Category
+from .models import Recipe, Ingredient, Category, RecipeIngredient
 
 
-class RecipeInline(admin.TabularInline):
-    model = Ingredient.recipes.through
+class RecipeIngredientInline(admin.TabularInline):
+    model = RecipeIngredient
+    extra = 1  # Количество пустых форм для добавления ингредиентов
 
 
 @admin.action(description='Archive Recipe')
@@ -22,7 +23,6 @@ def mark_unarchived(modeladmin: admin.ModelAdmin, request: HttpRequest, queryset
 
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
-    inlines = [RecipeInline]
     list_display = ('pk', 'name', 'description', 'measure', 'archived')
     list_display_links = ('pk', 'name')
     ordering = ('name',)
@@ -42,10 +42,6 @@ class IngredientAdmin(admin.ModelAdmin):
     ]
 
 
-class IngredientInline(admin.TabularInline):
-    model = Recipe.ingredients.through
-
-
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('pk', 'name', 'description')
@@ -56,7 +52,7 @@ class CategoryAdmin(admin.ModelAdmin):
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin, ExportAsCSVMixin):
     actions = ['mark_archived', 'mark_unarchived', 'export_csv']
-    inlines = [RecipeInline]
+    inlines = [RecipeIngredientInline]  # Используем RecipeIngredientInline
     list_display = ('pk', 'name', 'description_short', 'meal_type', 'rate', 'created_by_verbose', 'archived')
     list_display_links = ('pk', 'name')
     ordering = ('-rate',)
@@ -67,7 +63,7 @@ class RecipeAdmin(admin.ModelAdmin, ExportAsCSVMixin):
             'fields': ('name', 'description', 'instructions', 'cooking_time', 'image')
         }),
         ('Ingredients', {
-            'fields': ('ingredients', 'meal_type', 'categories'),
+            'fields': ('meal_type', 'categories'),
             'classes': ('collapse', 'wide')
         }),
         ('Extra options', {
@@ -83,7 +79,7 @@ class RecipeAdmin(admin.ModelAdmin, ExportAsCSVMixin):
         return obj.description[:48] + '...'
 
     def get_queryset(self, request):
-        return Recipe.objects.select_related('created_by').prefetch_related('ingredients', 'categories')
+        return Recipe.objects.select_related('created_by').prefetch_related('recipe_ingredients__ingredient', 'categories')
 
     def created_by_verbose(self, obj: Recipe) -> str:
         return obj.created_by.first_name or obj.created_by.username

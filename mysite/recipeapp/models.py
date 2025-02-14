@@ -17,12 +17,10 @@ class Ingredient(models.Model):
     name = models.CharField(max_length=200, null=False)
     description = models.TextField(null=False, blank=True, db_index=True)
     measure = models.CharField(max_length=15, blank=True, null=True)
-    quantity = models.PositiveIntegerField(default=0)
     archived = models.BooleanField(default=False)
 
     def __str__(self) -> str:
-        return (f'Продукт(название={self.name}, описание={self.description}, количество={self.quantity}'
-                f' measure={self.measure})')
+        return f'Продукт(название={self.name}, описание={self.description}, мера={self.measure})'
 
 
 class Recipe(models.Model):
@@ -40,7 +38,6 @@ class Recipe(models.Model):
     ], default='hot')
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
-    ingredients = models.ManyToManyField('Ingredient', related_name='recipes')
     categories = models.ManyToManyField('Category', related_name='recipes')
     archived = models.BooleanField(default=False)
 
@@ -51,6 +48,15 @@ class Recipe(models.Model):
     def average_rating(self):
         from django.db.models import Avg
         return self.ratings.aggregate(Avg('value'))['value__avg'] or 0
+
+
+class RecipeIngredient(models.Model):
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='recipe_ingredients')
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE, related_name='recipe_ingredients')
+    quantity = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return f'{self.ingredient.name} ({self.quantity} {self.ingredient.measure}) в рецепте {self.recipe.name}'
 
 
 class Comment(models.Model):
