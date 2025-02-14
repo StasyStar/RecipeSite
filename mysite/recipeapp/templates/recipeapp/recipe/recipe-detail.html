@@ -10,6 +10,11 @@
         <div class="card">
             <div class="card-body">
                 <h2 class="card-title">{{ object.name }}</h2>
+                {% if object.image %}
+                    <img src="{{ object.image.url }}" alt="{{ object.name }}" class="img-fluid mb-3">
+                {% else %}
+                    <p>Изображение отсутствует.</p>
+                {% endif %}
                 <p class="card-text">Категория: {{ object.meal_type }}</p>
                 <p class="card-text">{{ object.description }}</p>
                 <h3>Ингредиенты:</h3>
@@ -27,7 +32,10 @@
             </div>
         </div>
         <div class="mt-3">
-            <a href="{% url 'recipeapp:recipe_list' %}" class="btn btn-secondary">Вернуться к списку рецептов</a>
+            <a href="{% url 'recipeapp:recipe_index' %}" class="btn btn-secondary">Вернуться к списку рецептов</a>
+            <a href="{% url 'recipeapp:recipe_update' object.pk %}" class="btn btn-primary">Редактировать рецепт</a>
         </div>
     </div>
 {% endblock %}
+
+Найти еще

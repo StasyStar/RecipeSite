@@ -41,21 +41,27 @@
 
         <ul class="list-group">
             {% for recipe in recipes %}
-                <li class="list-group-item">
-                    <strong>{{ recipe.name }}</strong> {{ recipe.description }}
+                <li class="list-group-item d-flex align-items-center position-relative">
+                    <a href="{% url 'recipeapp:recipe_detail' recipe.id %}"
+                       class="stretched-link text-decoration-none text-reset d-flex align-items-center w-100">
+                        {% if recipe.image %}
+                            <img src="{{ recipe.image.url }}" alt="{{ recipe.name }}" class="img-fluid me-3" style="max-width: 100px; height: auto;">
+                        {% endif %}
+                        <div>
+                            <strong>{{ recipe.name }}</strong> - {{ recipe.description }}
 
-                    {% if recipe.image %}
-                        <img src="{{ recipe.image.url }}" alt="{{ recipe.name }}" class="img-fluid" style="max-width: 100px;">
-                    {% endif %}
-
-                    {% if recipe.rate > 7.5 %}
-                        <span class="badge bg-success">Высокий рейтинг!</span>
-                    {% endif %}
+                            {% if recipe.rate > 7.5 %}
+                                <span class="badge bg-success">Высокий рейтинг!</span>
+                            {% endif %}
+                        </div>
+                    </a>
                 </li>
             {% empty %}
                 <li class="list-group-item">Рецептов пока нет...</li>
             {% endfor %}
         </ul>
+
+
 
         <!-- Кнопка для создания нового рецепта -->
         <div class="mb-3">

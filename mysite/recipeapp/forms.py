@@ -4,7 +4,8 @@ from recipeapp.models import Ingredient, Recipe, Category
 
 class UserBioForm(forms.Form):
     name = forms.CharField(max_length=100, label='Имя', widget=forms.TextInput(attrs={'class': 'form-control'}))
-    age = forms.IntegerField(label='Ваш возраст', min_value=1, max_value=110, widget=forms.NumberInput(attrs={'class': 'form-control'}))
+    age = forms.IntegerField(label='Ваш возраст', min_value=1, max_value=110,
+                             widget=forms.NumberInput(attrs={'class': 'form-control'}))
     bio = forms.CharField(label='Биография', widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}))
 
 
@@ -29,11 +30,12 @@ class MultipleFileField(forms.FileField):
 class IngredientForm(forms.ModelForm):
     class Meta:
         model = Ingredient
-        fields = ['name', 'description', 'measure']
+        fields = ['name', 'description', 'measure', 'quantity']  # Указываем только существующие поля
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'measure': forms.TextInput(attrs={'class': 'form-control'}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control'}),
         }
 
 
@@ -47,8 +49,17 @@ class RecipeForm(forms.ModelForm):
             'instructions': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
             'cooking_time': forms.NumberInput(attrs={'class': 'form-control'}),
             'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
-            'ingredients': forms.SelectMultiple(attrs={'class': 'form-control'}),
+            'ingredients': forms.CheckboxSelectMultiple(),  # Используем CheckboxSelectMultiple
             'categories': forms.SelectMultiple(attrs={'class': 'form-control'}),
+        }
+        labels = {
+            'name': 'Название',
+            'description': 'Описание',
+            'instructions': 'Инструкции',
+            'cooking_time': 'Время приготовления (мин)',
+            'image': 'Изображение',
+            'ingredients': 'Ингредиенты',
+            'categories': 'Категории',
         }
 
 
