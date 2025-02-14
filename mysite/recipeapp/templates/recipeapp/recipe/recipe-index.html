@@ -24,62 +24,86 @@
 
         <!-- Форма для поиска -->
         <form method="get" class="mb-3">
-            <input type="text" name="search" placeholder="Поиск по названию" value="{{ request.GET.search }}">
-            <button type="submit">Поиск</button>
+            <div class="input-group">
+                <input type="text" name="search" class="form-control" placeholder="Поиск по названию" value="{{ request.GET.search }}">
+                <button type="submit" class="btn btn-primary">Поиск</button>
+            </div>
         </form>
 
         <!-- Фильтрация по категориям -->
         <div class="mb-3">
             <strong>Категория:</strong>
-            <ul>
-                <li><a href="?">Все</a></li>
+            <div class="btn-group" role="group">
+                <a href="?" class="btn btn-outline-secondary">Все</a>
                 {% for category in categories %}
-                    <li><a href="?category={{ category.id }}">{{ category.name }}</a></li>
+                    <a href="?category={{ category.id }}" class="btn btn-outline-secondary">{{ category.name }}</a>
                 {% endfor %}
-            </ul>
+            </div>
         </div>
 
-        <ul class="list-group">
+        <!-- Список рецептов -->
+        <div class="list-group">
             {% for recipe in recipes %}
-                <li class="list-group-item d-flex align-items-center position-relative">
-                    <a href="{% url 'recipeapp:recipe_detail' recipe.id %}"
-                       class="stretched-link text-decoration-none text-reset d-flex align-items-center w-100">
+                <a href="{% url 'recipeapp:recipe_detail' recipe.id %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex align-items-center">
                         {% if recipe.image %}
                             <img src="{{ recipe.image.url }}" alt="{{ recipe.name }}" class="img-fluid me-3" style="max-width: 100px; height: auto;">
                         {% endif %}
                         <div>
-                            <strong>{{ recipe.name }}</strong> - {{ recipe.description }}
-
+                            <h5 class="mb-1">{{ recipe.name }}</h5>
+                            <p class="mb-1">{{ recipe.description }}</p>
                             {% if recipe.rate > 7.5 %}
                                 <span class="badge bg-success">Высокий рейтинг!</span>
                             {% endif %}
                         </div>
-                    </a>
-                </li>
+                    </div>
+                </a>
             {% empty %}
-                <li class="list-group-item">Рецептов пока нет...</li>
+                <div class="list-group-item">Рецептов пока нет...</div>
             {% endfor %}
-        </ul>
+        </div>
 
-        <!-- Кнопка для создания нового рецепта -->
-        <div class="mb-3">
+        <!-- Кнопки управления -->
+        <div class="mt-3">
             <a href="{% url 'recipeapp:recipe_create' %}" class="btn btn-primary">Создать рецепт</a>
             <a href="{% url 'recipeapp:ingredient_list' %}" class="btn btn-secondary">Просмотреть ингредиенты</a>
         </div>
 
         <!-- Пагинация -->
-        <div class="pagination mt-3">
-            {% if recipes.has_previous %}
-                <a href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}">&laquo; Первая</a>
-                <a href="?page={{ recipes.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}">Предыдущая</a>
-            {% endif %}
+        <nav aria-label="Page navigation" class="mt-3">
+            <ul class="pagination">
+                {% if recipes.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ recipes.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
 
-            <span>Страница {{ recipes.number }} из {{ recipes.paginator.num_pages }}</span>
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        Страница {{ recipes.number }} из {{ recipes.paginator.num_pages }}
+                    </span>
+                </li>
 
-            {% if recipes.has_next %}
-                <a href="?page={{ recipes.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}">Следующая</a>
-                <a href="?page={{ recipes.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}">Последняя &raquo;</a>
-            {% endif %}
-        </div>
+                {% if recipes.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ recipes.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ recipes.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
     </div>
 {% endblock %}

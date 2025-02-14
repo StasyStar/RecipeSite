@@ -22,16 +22,5 @@ urlpatterns = [
     path('ingredients/create/', views.IngredientCreateView.as_view(), name='ingredient_create'),
     path('ingredients/<int:pk>/update/', views.IngredientUpdateView.as_view(), name='ingredient_update'),
     path('ingredients/delete/', views.IngredientDeleteView.as_view(), name='ingredient_delete'),
-
-    # Категории
-    path('categories/', views.CategoryListView.as_view(), name='category_list'),
-    path('categories/<int:pk>/', views.CategoryDetailView.as_view(), name='category_detail'),
-    path('categories/create/', views.CategoryCreateView.as_view(), name='category_create'),
-    path('categories/<int:pk>/update/', views.CategoryUpdateView.as_view(), name='category_update'),
-    path('categories/<int:pk>/delete/', views.CategoryDeleteView.as_view(), name='category_delete'),
-
-    # Профиль пользователя
-    path('profile/', views.user_form, name='user-bio-form'),
-
 ]
 

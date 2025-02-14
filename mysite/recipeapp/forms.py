@@ -67,9 +67,16 @@ class RecipeForm(forms.ModelForm):
         }
 
     def save(self, commit=True):
+        # Сохраняем рецепт, но не фиксируем изменения в базе данных (commit=False)
         recipe = super().save(commit=False)
+
         if commit:
+            # Сохраняем рецепт в базе данных
             recipe.save()
+
+            # Сохраняем связи ManyToMany (категории)
+            self.save_m2m()  # Это важно для сохранения категорий
+
         return recipe
 
 

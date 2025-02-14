@@ -12,8 +12,6 @@ from recipeapp.models import Ingredient, Recipe, Category, Comment, Rating
 
 
 class RecipeFilterMixin:
-    """Миксин для фильтрации и поиска рецептов."""
-
     def get_queryset(self):
         queryset = super().get_queryset()
 
@@ -31,12 +29,7 @@ class RecipeFilterMixin:
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        # Добавляем список категорий для фильтрации
         context['categories'] = Category.objects.all()
-
-        # Также можно добавить дополнительные данные, если нужно
-        # например, передать общее количество рецептов для отображения на странице
         context['total_recipes'] = self.get_queryset().count()
 
         return context
@@ -46,7 +39,18 @@ class RecipeIndexView(RecipeFilterMixin, ListView):
     model = Recipe
     template_name = 'recipeapp/recipe/recipe-index.html'
     context_object_name = 'recipes'
-    paginate_by = 10
+    paginate_by = 30
+
+    def get_queryset(self):
+        # Получаем параметр категории из запроса (например, ?category=1)
+        category_id = self.request.GET.get('category')
+
+        # Фильтруем рецепты по категории, если параметр передан
+        queryset = Recipe.objects.all()
+        if category_id:
+            queryset = queryset.filter(categories__id=category_id)
+
+        return queryset
 
 
 class IngredientDetailsView(DetailView):
@@ -58,24 +62,19 @@ class IngredientDetailsView(DetailView):
 
 
 class IngredientListView(ListView):
-    template_name = 'recipeapp/ingredient/ingredient-list.html'  # Путь к шаблону
-    context_object_name = 'ingredients'  # Имя переменной контекста
-    paginate_by = 10  # Пагинация по 10 ингредиентов на странице
+    template_name = 'recipeapp/ingredient/ingredient-list.html'
+    context_object_name = 'ingredients'
+    paginate_by = 50
 
     def get_queryset(self):
-        # Получаем параметр сортировки из запроса (например, ?sort=name)
-        sort_by = self.request.GET.get('sort', 'name')  # По умолчанию сортируем по имени
+        sort_by = self.request.GET.get('sort', 'name')
 
-        # Определяем допустимые поля для сортировки
         valid_sort_fields = ['name', 'measure', '-name', '-measure']
         if sort_by not in valid_sort_fields:
-            sort_by = 'name'  # Если поле сортировки недопустимо, сортируем по умолчанию
-
-        # Возвращаем отсортированный и отфильтрованный queryset
+            sort_by = 'name'
         return Ingredient.objects.filter(archived=False).order_by(sort_by)
 
     def get_context_data(self, **kwargs):
-        # Добавляем параметр сортировки в контекст
         context = super().get_context_data(**kwargs)
         context['sort'] = self.request.GET.get('sort', 'name')  # Передаем текущую сортировку в шаблон
         return context
@@ -97,10 +96,6 @@ class IngredientUpdateView(UpdateView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        # Обработка загрузки изображений
-        # files = form.cleaned_data['images']
-        # for image in files:
-        #     IngredientImage.objects.create(product=self.object, image=image)
         return response
 
 
@@ -118,7 +113,6 @@ class IngredientDeleteView(View):
         else:
             messages.error(request, 'Не выбрано ни одного ингредиента для архивирования.')
 
-        # Перенаправляем на страницу списка ингредиентов
         return HttpResponseRedirect(self.success_url)
 
 
@@ -136,7 +130,6 @@ class RecipeDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Добавляем средний рейтинг рецепта
         context['average_rating'] = self.object.average_rating()
         return context
 
@@ -197,7 +190,6 @@ class RecipeUpdateView(UpdateView):
     template_name = 'recipeapp/recipe/recipe-update.html'
 
     def get_success_url(self):
-        # Редирект на страницу с деталями текущего рецепта
         return reverse_lazy('recipeapp:recipe_detail', kwargs={'pk': self.object.pk})
 
     def get_context_data(self, **kwargs):
@@ -217,10 +209,8 @@ class RecipeUpdateView(UpdateView):
         self.object = self.get_object()
         form = self.get_form()
         if form.is_valid():
-            # Сохраняем основную форму
             self.object = form.save()
 
-            # Обрабатываем ингредиенты
             ingredients = Ingredient.objects.filter(archived=False)
             for ingredient in ingredients:
                 ingredient_id = ingredient.id
@@ -246,37 +236,6 @@ class RecipeDeleteView(LoginRequiredMixin, DeleteView):
     model = Recipe
     success_url = reverse_lazy('recipeapp:recipe_index')
 
-
-class CategoryListView(ListView):
-    model = Category
-    template_name = 'recipeapp/category/category_list.html'
-    context_object_name = 'categories'
-
-
-class CategoryDetailView(DetailView):
-    model = Category
-    template_name = 'recipeapp/category/category_detail.html'
-    context_object_name = 'category'
-
-
-class CategoryCreateView(CreateView):
-    model = Category
-    template_name = 'recipeapp/category/category_form.html'
-    fields = ['name', 'description']
-    success_url = reverse_lazy('category_list')
-
-
-class CategoryUpdateView(UpdateView):
-    model = Category
-    template_name = 'recipeapp/category/category_form.html'
-    fields = ['name', 'description']
-    success_url = reverse_lazy('category_list')
-
-
-class CategoryDeleteView(DeleteView):
-    model = Category
-    template_name = 'recipeapp/category/category_confirm_delete.html'
-    success_url = reverse_lazy('category-list')
 
 
 @login_required
