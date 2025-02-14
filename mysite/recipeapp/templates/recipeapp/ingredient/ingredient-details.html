@@ -1,0 +1,22 @@
+{% extends 'recipeapp/base.html' %}
+
+{% block title %}
+    Продукт #{{ ingredient.pk }}
+{% endblock %}
+
+{% block body %}
+    <div class="container mt-5">
+        <h1>Продукт: <strong>{{ ingredient.name }}</strong></h1>
+        <div class="card">
+            <div class="card-body">
+                <p class="card-text">Описание: <em>{{ ingredient.description }}</em></p>
+                <p class="card-text">Измеряется в: {{ ingredient.measure }}</p>
+            </div>
+        </div>
+        <div class="mt-3">
+            <a href="{% url 'recipeapp:ingredient_update' pk=ingredient.pk %}" class="btn btn-primary">Обновить продукт</a>
+            <a href="{% url 'recipeapp:ingredient_delete' pk=ingredient.pk %}" class="btn btn-danger">Заархивировать продукт</a>
+            <a href="{% url 'recipeapp:ingredient_list' %}" class="btn btn-secondary">Вернуться к списку продуктов</a>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'recipeapp/base.html' %}
+
+{% block title %}
+    Список категорий
+{% endblock %}
+
+{% block body %}
+    <div class="container mt-5">
+        <h1>Список категорий</h1>
+        {% if categories %}
+            <ul class="list-group">
+                {% for category in categories %}
+                    <li class="list-group-item">
+                        <a href="{% url 'category_detail' pk=category.pk %}">{{ category.name }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <h3>Категорий пока нет...</h3>
+        {% endif %}
+        <div class="mt-3">
+            <a href="{% url 'category_create' %}" class="btn btn-success">Создать новую категорию</a>
+        </div>
+    </div>
+{% endblock %}

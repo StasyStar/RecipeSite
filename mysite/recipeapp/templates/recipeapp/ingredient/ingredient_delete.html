@@ -1,0 +1,20 @@
+{% extends 'recipeapp/base.html' %}
+
+{% block title %}
+    Подтверждение архивации {{ object.name }}
+{% endblock %}
+
+{% block body %}
+    <div class="container mt-5">
+        <h1>Вы уверены, что хотите заархивировать продукт - {{ object.name }}?</h1>
+        <br>
+        <div>
+            <a href="{% url 'recipeapp:ingredient_details' pk=object.pk %}" class="btn btn-secondary">Вернуться к деталям продукта</a>
+        </div>
+        <br>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Архивировать</button>
+        </form>
+    </div>
+{% endblock %}

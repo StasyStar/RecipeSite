@@ -1,0 +1,20 @@
+{% extends 'myauth/base.html' %}
+
+{% block title %}
+    Вход в систему
+{% endblock %}
+
+{% block body %}
+    <div class="container mt-5">
+        <h2>Вход в систему</h2>
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="hidden" name="next" value="{{ request.GET.next }}">
+            <button type="submit" class="btn btn-primary">Войти</button>
+        </form>
+
+        <p>Нет аккаунта? <a href="{% url 'myauth:signup' %}">Зарегистрируйтесь</a></p>
+    </div>
+{% endblock %}

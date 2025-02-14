@@ -1,0 +1,12 @@
+<div class="text-end mb-3">
+    {% if user.is_authenticated %}
+        <span>Добро пожаловать, {{ user.username }}!</span>
+        <form action="{% url 'myauth:logout' %}" method="post" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-secondary">Выйти</button>
+        </form>
+    {% else %}
+        <a href="{% url 'myauth:login' %}" class="btn btn-primary">Войти</a>
+        <a href="{% url 'myauth:signup' %}" class="btn btn-secondary">Регистрация</a>
+    {% endif %}
+</div>

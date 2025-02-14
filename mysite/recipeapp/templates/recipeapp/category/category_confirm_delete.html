@@ -1,0 +1,16 @@
+{% extends 'recipeapp/base.html' %}
+
+{% block title %}
+    Удаление категории: {{ object.name }}
+{% endblock %}
+
+{% block body %}
+    <div class="container mt-5">
+        <h1>Вы уверены, что хотите удалить категорию "{{ object.name }}"?</h1>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Удалить</button>
+            <a href="{% url 'category_list' %}" class="btn btn-secondary">Отмена</a>
+        </form>
+    </div>
+{% endblock %}

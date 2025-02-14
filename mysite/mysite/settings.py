@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-!*5u7wvnr4ld_7d9uv+@r*^a)eo*os+hq&^7%*!91$=ja=5)%4
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
+LOGIN_URL = '/myauth/login/'
 
 # Application definition
 
@@ -37,6 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'recipeapp.apps.RecipeappConfig',
+    'myauth.apps.MyauthConfig',
 ]
 
 MIDDLEWARE = [

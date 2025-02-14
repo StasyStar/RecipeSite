@@ -1,0 +1,34 @@
+from django.urls import path, include
+from recipeapp import views
+
+app_name = 'recipeapp'
+
+urlpatterns = [
+    # Главная страница
+    path('', views.RecipeIndexView.as_view(), name='recipe_index'),
+
+    # Рецепты
+    path('recipes/', views.RecipeListView.as_view(), name='recipe_list'),
+    path('recipes/<int:pk>/', views.RecipeDetailView.as_view(), name='recipe_detail'),
+    path('recipes/create/', views.RecipeCreateView.as_view(), name='recipe_create'),
+    path('recipes/<int:pk>/update/', views.RecipeUpdateView.as_view(), name='recipe_update'),
+    path('recipes/<int:pk>/delete/', views.RecipeDeleteView.as_view(), name='recipe_delete'),
+
+    # Ингредиенты
+    path('ingredients/', views.IngredientListView.as_view(), name='ingredient_list'),
+    path('ingredients/<int:pk>/', views.IngredientDetailsView.as_view(), name='ingredient_detail'),
+    path('ingredients/create/', views.IngredientCreateView.as_view(), name='ingredient_create'),
+    path('ingredients/<int:pk>/update/', views.IngredientUpdateView.as_view(), name='ingredient_update'),
+    path('ingredients/<int:pk>/delete/', views.IngredientDeleteView.as_view(), name='ingredient_delete'),
+
+    # Категории
+    path('categories/', views.CategoryListView.as_view(), name='category_list'),
+    path('categories/<int:pk>/', views.CategoryDetailView.as_view(), name='category_detail'),
+    path('categories/create/', views.CategoryCreateView.as_view(), name='category_create'),
+    path('categories/<int:pk>/update/', views.CategoryUpdateView.as_view(), name='category_update'),
+    path('categories/<int:pk>/delete/', views.CategoryDeleteView.as_view(), name='category_delete'),
+
+    # Профиль пользователя
+    path('profile/', views.user_form, name='user-bio-form'),
+]
+

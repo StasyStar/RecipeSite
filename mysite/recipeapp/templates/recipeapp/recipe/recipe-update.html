@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Редактирование рецепта
+{% endblock %}
+
+{% block body %}
+    <div class="container mt-5">
+        <h1>Редактирование рецепта: {{ object.name }}</h1>
+        <form method="post" enctype="multipart/form-data" class="mt-4">
+            {% csrf_token %}
+            <div class="mb-3">
+                {{ form.as_p }}
+            </div>
+            <button type="submit" class="btn btn-success">Сохранить изменения</button>
+            <a href="{% url 'recipeapp:recipe_detail' pk=object.pk %}" class="btn btn-secondary">Отмена</a>
+        </form>
+    </div>
+{% endblock %}

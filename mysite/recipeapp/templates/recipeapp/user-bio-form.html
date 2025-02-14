@@ -1,0 +1,37 @@
+{% extends 'recipeapp/base.html' %}
+
+{% block title %}
+    Личный кабинет
+{% endblock %}
+
+{% block body %}
+    <div class="container mt-5">
+        <h1>Личный кабинет</h1>
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                {{ form.as_p }}
+            </div>
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+        </form>
+        {% if request.POST %}
+            <div class="mt-4">
+                <h2>Предыдущие данные:</h2>
+                <table class="table">
+                    <tr>
+                        <td>Имя:</td>
+                        <td>{{ request.POST.name }}</td>
+                    </tr>
+                    <tr>
+                        <td>Возраст:</td>
+                        <td>{{ request.POST.age }}</td>
+                    </tr>
+                    <tr>
+                        <td>О себе:</td>
+                        <td>{{ request.POST.bio | linebreaks }}</td>
+                    </tr>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

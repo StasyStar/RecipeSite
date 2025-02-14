@@ -1,0 +1,80 @@
+{% extends 'recipeapp/base.html' %}
+
+{% block title %}
+    Рецепты на каждый день
+{% endblock %}
+
+{% block body %}
+    <div class="container mt-5">
+        <h1>Рецепты на каждый день</h1>
+
+        <!-- Блок авторизации/регистрации -->
+        <div class="text-end mb-3">
+            {% if user.is_authenticated %}
+                <span>Добро пожаловать, {{ user.username }}!</span>
+                <form action="{% url 'myauth:logout' %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-secondary">Выйти</button>
+                </form>
+            {% else %}
+                <a href="{% url 'myauth:login' %}" class="btn btn-primary">Войти</a>
+                <a href="{% url 'myauth:signup' %}" class="btn btn-secondary">Регистрация</a>
+            {% endif %}
+        </div>
+
+        <!-- Форма для поиска -->
+        <form method="get" class="mb-3">
+            <input type="text" name="search" placeholder="Поиск по названию" value="{{ request.GET.search }}">
+            <button type="submit">Поиск</button>
+        </form>
+
+        <!-- Фильтрация по категориям -->
+        <div class="mb-3">
+            <strong>Категория:</strong>
+            <ul>
+                <li><a href="?">Все</a></li>  <!-- Ссылка на все рецепты -->
+                {% for category in categories %}
+                    <li><a href="?category={{ category.id }}">{{ category.name }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <ul class="list-group">
+            {% for recipe in recipes %}
+                <li class="list-group-item">
+                    <strong>{{ recipe.name }}</strong> {{ recipe.description }}
+
+                    {% if recipe.image %}
+                        <img src="{{ recipe.image.url }}" alt="{{ recipe.name }}" class="img-fluid" style="max-width: 100px;">
+                    {% endif %}
+
+                    {% if recipe.rate > 7.5 %}
+                        <span class="badge bg-success">Высокий рейтинг!</span>
+                    {% endif %}
+                </li>
+            {% empty %}
+                <li class="list-group-item">Рецептов пока нет...</li>
+            {% endfor %}
+        </ul>
+
+        <!-- Кнопка для создания нового рецепта -->
+        <div class="mb-3">
+            <a href="{% url 'recipeapp:recipe_create' %}" class="btn btn-primary">Создать рецепт</a>
+        </div>
+
+        <!-- Пагинация -->
+        <div class="pagination mt-3">
+            {% if recipes.has_previous %}
+                <a href="?page=1">&laquo; Первая</a>
+                <a href="?page={{ recipes.previous_page_number }}">Предыдущая</a>
+            {% endif %}
+
+            <span>Страница {{ recipes.number }} из {{ recipes.paginator.num_pages }}</span>
+
+            {% if recipes.has_next %}
+                <a href="?page={{ recipes.next_page_number }}">Следующая</a>
+                <a href="?page={{ recipes.paginator.num_pages }}">Последняя &raquo;</a>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
