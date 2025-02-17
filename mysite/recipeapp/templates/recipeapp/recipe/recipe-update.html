@@ -32,7 +32,7 @@
                                     type="checkbox"
                                     name="ingredient_{{ ingredient.id }}"
                                     id="ingredient_{{ ingredient.id }}"
-                                    {% if ingredient in object.ingredients.all %}checked{% endif %}
+                                    {% if ingredient.id in existing_ingredients %}checked{% endif %}
                                 >
                             </td>
                             <td>{{ ingredient.name }}</td>
@@ -41,7 +41,7 @@
                                     type="number"
                                     name="quantity_{{ ingredient.id }}"
                                     id="quantity_{{ ingredient.id }}"
-                                    value="{{ ingredient_quantities|get:ingredient.id }}"
+                                    value="{{ existing_ingredients|get:ingredient.id|default:1 }}"
                                     min="1"
                                     class="form-control"
                                     style="width: 80px;"
@@ -52,6 +52,20 @@
                     {% endfor %}
                 </tbody>
             </table>
+
+            <h3>Тип блюда</h3>
+            <div class="mb-3">
+                <strong>Тип:</strong>
+                <div class="btn-group" role="group">
+                    {% for meal_type in form.meal_type.field.choices %}
+                        <label class="btn btn-outline-secondary">
+                            <input type="radio" name="meal_type" value="{{ meal_type.0 }}"
+                                   {% if object.meal_type == meal_type.0 %}checked{% endif %}>
+                            {{ meal_type.1 }}
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
 
             <button type="submit" class="btn btn-success">Сохранить изменения</button>
             <a href="{% url 'recipeapp:recipe_detail' object.pk %}" class="btn btn-secondary">Отмена</a>

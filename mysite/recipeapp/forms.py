@@ -48,7 +48,7 @@ class IngredientSelectionForm(forms.Form):
 class RecipeForm(forms.ModelForm):
     class Meta:
         model = Recipe
-        fields = ['name', 'description', 'instructions', 'cooking_time', 'image', 'categories']
+        fields = ['name', 'description', 'instructions', 'cooking_time', 'image', 'categories', 'meal_type']
         labels = {
             'name': 'Название',
             'description': 'Описание',
@@ -56,6 +56,7 @@ class RecipeForm(forms.ModelForm):
             'cooking_time': 'Время приготовления (мин)',
             'image': 'Изображение',
             'categories': 'Категории',
+            'meal_type': 'Тип блюда',  # Добавлено
         }
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -64,20 +65,8 @@ class RecipeForm(forms.ModelForm):
             'cooking_time': forms.NumberInput(attrs={'class': 'form-control'}),
             'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
             'categories': forms.SelectMultiple(attrs={'class': 'form-control'}),
+            'meal_type': forms.Select(attrs={'class': 'form-control'}),  # Добавлено
         }
-
-    def save(self, commit=True):
-        # Сохраняем рецепт, но не фиксируем изменения в базе данных (commit=False)
-        recipe = super().save(commit=False)
-
-        if commit:
-            # Сохраняем рецепт в базе данных
-            recipe.save()
-
-            # Сохраняем связи ManyToMany (категории)
-            self.save_m2m()  # Это важно для сохранения категорий
-
-        return recipe
 
 
 class CategoryForm(forms.ModelForm):

@@ -8,57 +8,64 @@
 {% block body %}
     <div class="container mt-5">
         <h1>Создание нового рецепта</h1>
-        <form method="post" enctype="multipart/form-data" class="mt-4">
-            {% csrf_token %}
-            <div class="mb-3">
-                {{ form.as_p }}
-            </div>
 
-            <h3>Ингредиенты</h3>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Выбрать</th>
-                        <th>Название</th>
-                        <th>Количество</th>
-                        <th>Единица измерения</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for ingredient in ingredients %}
+        {% if user.is_authenticated %}
+            <form method="post" enctype="multipart/form-data" class="mt-4">
+                {% csrf_token %}
+                <div class="mb-3">
+                    {{ form.as_p }}
+                </div>
+
+                <h3>Ингредиенты</h3>
+                <table class="table">
+                    <thead>
                         <tr>
-                            <td>
-                                <input
-                                    type="checkbox"
-                                    name="ingredient_{{ ingredient.id }}"
-                                    id="ingredient_{{ ingredient.id }}"
-                                >
-                            </td>
-                            <td>{{ ingredient.name }}</td>
-                            <td>
-                                <input
-                                    type="number"
-                                    name="quantity_{{ ingredient.id }}"
-                                    id="quantity_{{ ingredient.id }}"
-                                    value="1"
-                                    min="1"
-                                    class="form-control"
-                                    style="width: 80px;"
-                                >
-                            </td>
-                            <td>{{ ingredient.measure }}</td>
+                            <th>Выбрать</th>
+                            <th>Название</th>
+                            <th>Количество</th>
+                            <th>Единица измерения</th>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {% for ingredient in ingredients %}
+                            <tr>
+                                <td>
+                                    <input
+                                        type="checkbox"
+                                        name="ingredient_{{ ingredient.id }}"
+                                        id="ingredient_{{ ingredient.id }}"
+                                    >
+                                </td>
+                                <td>{{ ingredient.name }}</td>
+                                <td>
+                                    <input
+                                        type="number"
+                                        name="quantity_{{ ingredient.id }}"
+                                        id="quantity_{{ ingredient.id }}"
+                                        value="1"
+                                        min="1"
+                                        class="form-control"
+                                        style="width: 80px;"
+                                    >
+                                </td>
+                                <td>{{ ingredient.measure }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
 
-            <button type="submit" class="btn btn-success">Создать рецепт</button>
-            <a href="{% url 'recipeapp:recipe_index' %}" class="btn btn-secondary">Отмена</a>
-        </form>
+                <button type="submit" class="btn btn-success">Создать рецепт</button>
+                <a href="{% url 'recipeapp:recipe_index' %}" class="btn btn-secondary">Отмена</a>
+            </form>
 
-        <!-- Кнопка для создания недостающих ингредиентов -->
-        <div class="mt-3">
-            <a href="{% url 'recipeapp:ingredient_create' %}" class="btn btn-primary">Создать недостающие ингредиенты</a>
-        </div>
+            <!-- Кнопка для создания недостающих ингредиентов -->
+            <div class="mt-3">
+                <a href="{% url 'recipeapp:ingredient_create' %}" class="btn btn-primary">Создать недостающие ингредиенты</a>
+            </div>
+        {% else %}
+            <div class="alert alert-warning">
+                Чтобы создать рецепт, пожалуйста, <a href="{% url 'login' %}">войдите в систему</a>.
+            </div>
+        {% endif %}
     </div>
 {% endblock %}

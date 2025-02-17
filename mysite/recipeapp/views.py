@@ -44,11 +44,15 @@ class RecipeIndexView(RecipeFilterMixin, ListView):
     def get_queryset(self):
         # Получаем параметр категории из запроса (например, ?category=1)
         category_id = self.request.GET.get('category')
+        # Получаем параметр поиска из запроса (например, ?search=название)
+        search_query = self.request.GET.get('search')
 
-        # Фильтруем рецепты по категории, если параметр передан
         queryset = Recipe.objects.all()
         if category_id:
             queryset = queryset.filter(categories__id=category_id)
+
+        if search_query:
+            queryset = queryset.filter(name__icontains=search_query)
 
         return queryset
 
@@ -149,7 +153,7 @@ def user_form(request: HttpRequest) -> HttpResponse:
     return render(request, 'recipeapp/user-bio-form.html', context=context)
 
 
-class RecipeCreateView(CreateView):
+class RecipeCreateView(LoginRequiredMixin, CreateView):
     model = Recipe
     form_class = RecipeForm
     template_name = 'recipeapp/recipe/recipe-create.html'
@@ -157,17 +161,14 @@ class RecipeCreateView(CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Получаем все неархивированные ингредиенты
         context['ingredients'] = Ingredient.objects.filter(archived=False)
         return context
 
     def form_valid(self, form):
-        # Сохраняем рецепт
         recipe = form.save(commit=False)
         recipe.created_by = self.request.user
         recipe.save()
 
-        # Обрабатываем ингредиенты
         ingredients = Ingredient.objects.filter(archived=False)
         for ingredient in ingredients:
             ingredient_id = ingredient.id
@@ -195,14 +196,12 @@ class RecipeUpdateView(UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         ingredients = Ingredient.objects.filter(archived=False)
-        ingredient_quantities = {
-            ingredient.id: self.object.recipe_ingredients.filter(ingredient=ingredient).first().quantity
-            if self.object.recipe_ingredients.filter(ingredient=ingredient).exists()
-            else 1
-            for ingredient in ingredients
-        }
+
+        # Получаем все связанные ингредиенты для текущего рецепта
+        existing_ingredients = {ri.ingredient.id: ri.quantity for ri in self.object.recipe_ingredients.all()}
+
         context['ingredients'] = ingredients
-        context['ingredient_quantities'] = ingredient_quantities
+        context['existing_ingredients'] = existing_ingredients  # Словарь с ID ингредиентов и их количеством
         return context
 
     def post(self, request, *args, **kwargs):
@@ -211,22 +210,28 @@ class RecipeUpdateView(UpdateView):
         if form.is_valid():
             self.object = form.save()
 
+            # Получаем все ингредиенты
             ingredients = Ingredient.objects.filter(archived=False)
+            selected_ingredient_ids = []
+
             for ingredient in ingredients:
                 ingredient_id = ingredient.id
                 is_selected = request.POST.get(f'ingredient_{ingredient_id}') == 'on'
                 quantity = request.POST.get(f'quantity_{ingredient_id}', 1)
 
                 if is_selected:
+                    # Если ингредиент выбран, обновляем или создаем его
                     RecipeIngredient.objects.update_or_create(
                         recipe=self.object,
                         ingredient=ingredient,
                         defaults={'quantity': quantity}
                     )
-                else:
-                    RecipeIngredient.objects.filter(recipe=self.object, ingredient=ingredient).delete()
+                    selected_ingredient_ids.append(ingredient_id)  # Сохраняем ID выбранных ингредиентов
 
-            # Вызываем form_valid для выполнения редиректа
+            # Удаляем только те ингредиенты, которые не были выбраны
+            RecipeIngredient.objects.filter(recipe=self.object).exclude(
+                ingredient__id__in=selected_ingredient_ids).delete()
+
             return self.form_valid(form)
         else:
             return self.form_invalid(form)
@@ -235,7 +240,6 @@ class RecipeUpdateView(UpdateView):
 class RecipeDeleteView(LoginRequiredMixin, DeleteView):
     model = Recipe
     success_url = reverse_lazy('recipeapp:recipe_index')
-
 
 
 @login_required
