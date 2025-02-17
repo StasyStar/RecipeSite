@@ -18,7 +18,9 @@
                     <p class="text-muted">Изображение отсутствует.</p>
                 {% endif %}
 
-                <p class="card-text"><strong>Категория:</strong> {{ object.get_meal_type_display }}</p>
+                <!-- Отображение категорий -->
+                <p class="card-text"><strong>Категория:</strong> {{ object.get_categories_display }}</p>
+
                 <p class="card-text"><strong>Описание:</strong> {{ object.description }}</p>
                 <p class="card-text"><strong>Время приготовления:</strong> {{ object.cooking_time }} минут</p>
 
@@ -37,7 +39,7 @@
 
                 <!-- Инструкции -->
                 <h3 class="mt-3">Инструкции:</h3>
-                <p class="card-text">{{ object.instructions }}</p>
+                <p class="card-text">{{ object.instructions|linebreaks }}</p>
 
                 <!-- Комментарии -->
                 <h3>Комментарии:</h3>
@@ -72,7 +74,7 @@
                 </form>
 
                 <!-- Рейтинг, автор и дата создания -->
-                <p class="card-text mt-3"><strong>Рейтинг:</strong> {{ object.rate|default:"еще нет оценок" }}</p>
+                <p class="card-text mt-3"><strong>Рейтинг:</strong> {{ average_rating|default:"еще нет оценок" }}</p>
                 <p class="card-text"><strong>Автор:</strong> {% firstof object.created_by.first_name object.created_by.username %}</p>
                 <p class="card-text"><strong>Дата создания:</strong> {{ object.created_at|date:"d.m.Y H:i" }}</p>
             </div>

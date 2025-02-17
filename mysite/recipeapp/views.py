@@ -169,7 +169,12 @@ class RecipeCreateView(LoginRequiredMixin, CreateView):
         recipe.created_by = self.request.user
         recipe.save()
 
+        selected_categories = form.cleaned_data['categories']
+        recipe.categories.set(selected_categories)
+
         ingredients = Ingredient.objects.filter(archived=False)
+        selected_ingredient_ids = []
+
         for ingredient in ingredients:
             ingredient_id = ingredient.id
             is_selected = self.request.POST.get(f'ingredient_{ingredient_id}') == 'on'
@@ -181,6 +186,7 @@ class RecipeCreateView(LoginRequiredMixin, CreateView):
                     ingredient=ingredient,
                     quantity=quantity
                 )
+                selected_ingredient_ids.append(ingredient_id)  # Сохраняем ID выбранных ингредиентов
 
         return super().form_valid(form)
 
@@ -196,12 +202,10 @@ class RecipeUpdateView(UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         ingredients = Ingredient.objects.filter(archived=False)
-
-        # Получаем все связанные ингредиенты для текущего рецепта
         existing_ingredients = {ri.ingredient.id: ri.quantity for ri in self.object.recipe_ingredients.all()}
-
         context['ingredients'] = ingredients
-        context['existing_ingredients'] = existing_ingredients  # Словарь с ID ингредиентов и их количеством
+        context['existing_ingredients'] = existing_ingredients
+        context['selected_categories'] = self.object.categories.all()  # Передаем выбранные категории в контекст
         return context
 
     def post(self, request, *args, **kwargs):
@@ -209,6 +213,10 @@ class RecipeUpdateView(UpdateView):
         form = self.get_form()
         if form.is_valid():
             self.object = form.save()
+
+            # Обновляем категории
+            selected_categories = form.cleaned_data['categories']
+            self.object.categories.set(selected_categories)
 
             # Получаем все ингредиенты
             ingredients = Ingredient.objects.filter(archived=False)

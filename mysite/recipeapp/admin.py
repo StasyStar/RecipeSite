@@ -52,18 +52,18 @@ class CategoryAdmin(admin.ModelAdmin):
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin, ExportAsCSVMixin):
     actions = ['mark_archived', 'mark_unarchived', 'export_csv']
-    inlines = [RecipeIngredientInline]  # Используем RecipeIngredientInline
-    list_display = ('pk', 'name', 'description_short', 'meal_type', 'rate', 'created_by_verbose', 'archived')
+    inlines = [RecipeIngredientInline]
+    list_display = ('pk', 'name', 'description_short', 'categories_list', 'rate', 'created_by_verbose', 'archived')
     list_display_links = ('pk', 'name')
     ordering = ('-rate',)
     search_fields = ('name', 'description')
-    list_filter = ('archived', 'meal_type', 'created_by')
+    list_filter = ('archived', 'categories', 'created_by')
     fieldsets = [
         (None, {
             'fields': ('name', 'description', 'instructions', 'cooking_time', 'image')
         }),
         ('Ingredients', {
-            'fields': ('meal_type', 'categories'),
+            'fields': ('categories',),
             'classes': ('collapse', 'wide')
         }),
         ('Extra options', {
@@ -77,6 +77,10 @@ class RecipeAdmin(admin.ModelAdmin, ExportAsCSVMixin):
         if len(obj.description) < 48:
             return obj.description
         return obj.description[:48] + '...'
+
+    def categories_list(self, obj):
+        return ", ".join([category.name for category in obj.categories.all()])
+    categories_list.short_description = 'Categories'
 
     def get_queryset(self, request):
         return Recipe.objects.select_related('created_by').prefetch_related('recipe_ingredients__ingredient', 'categories')

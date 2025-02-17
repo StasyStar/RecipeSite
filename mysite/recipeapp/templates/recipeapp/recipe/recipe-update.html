@@ -53,20 +53,6 @@
                 </tbody>
             </table>
 
-            <h3>Тип блюда</h3>
-            <div class="mb-3">
-                <strong>Тип:</strong>
-                <div class="btn-group" role="group">
-                    {% for meal_type in form.meal_type.field.choices %}
-                        <label class="btn btn-outline-secondary">
-                            <input type="radio" name="meal_type" value="{{ meal_type.0 }}"
-                                   {% if object.meal_type == meal_type.0 %}checked{% endif %}>
-                            {{ meal_type.1 }}
-                        </label>
-                    {% endfor %}
-                </div>
-            </div>
-
             <button type="submit" class="btn btn-success">Сохранить изменения</button>
             <a href="{% url 'recipeapp:recipe_detail' object.pk %}" class="btn btn-secondary">Отмена</a>
         </form>

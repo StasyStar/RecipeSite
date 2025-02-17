@@ -49,12 +49,6 @@ class Recipe(models.Model):
     cooking_time = models.PositiveIntegerField(help_text="Время приготовления в минутах")
     image = models.ImageField(upload_to='recipes/', blank=True, null=True)
     rate = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
-    meal_type = models.CharField(max_length=50, choices=[
-        ('hot', 'Горячее'),
-        ('soup', 'Суп'),
-        ('salad', 'Салат'),
-        ('dessert', 'Десерт'),
-    ], default='hot')
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     categories = models.ManyToManyField('Category', related_name='recipes')
@@ -67,6 +61,9 @@ class Recipe(models.Model):
     def average_rating(self):
         from django.db.models import Avg
         return self.ratings.aggregate(Avg('value'))['value__avg'] or 0
+
+    def get_categories_display(self):
+        return ", ".join([category.name for category in self.categories.all()])
 
 
 class RecipeIngredient(models.Model):
